@@ -25,7 +25,7 @@ def setup_logger_kwargs(exp_name, env_name, seed=None, data_dir=None):
 
     if seed is not None:
         # Make a seed-specific subfolder in the experiment directory.
-        subfolder = ''.join([exp_name, '_', env_name, '_s', str(seed)])
+        subfolder = ''.join(['s', str(seed)])
         relpath = osp.join(relpath, subfolder)
 
     logger_kwargs = dict(output_dir=osp.join(data_dir, relpath),
@@ -71,10 +71,9 @@ class Logger:
         # cur_str = ""
         for key in self.log_headers:
             val = self.log_current_row.get(key, "")
-            # cur_str += f"{key}:{val:.2f}\t"
-            # valstr = "%8.3g" % val if hasattr(val, "__float__") else val
+            valstr = "%8.3g" % val if hasattr(val, "__float__") else val
             # print(fmt % (key, valstr))
-            vals.append(val)
+            vals.append(valstr)
         if self.first_row:
             print("\t".join(self.log_headers))
         print("\t".join(map(str, vals)))
