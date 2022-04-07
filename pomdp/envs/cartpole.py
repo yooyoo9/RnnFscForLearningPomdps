@@ -9,6 +9,7 @@ class CartpoleEnv(CartPoleEnv):
         super(CartpoleEnv, self).__init__()
         self.name = 'cartpole'
         self.observation_space_n = 2
+        self.finite_actions = True
         self.action_space_n = 2
         self.max_ep_len = 200
 

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-from .base import ActorCritic
+from pomdp.agents.ac.base import ActorCritic
 
 
 class LstmCritic(nn.Module):
@@ -48,7 +48,8 @@ class LstmActorCritic(ActorCritic):
         self.a_hx = self.a_cx = self.c_hx = self.c_cx = None
 
     def get_actor(self):
-        return LstmActor(self.obs_dim, self.act_dim)
+        if self.env.finite_actions:
+            return LstmActor(self.obs_dim, self.act_dim)
 
     def get_critic(self):
         return LstmCritic(self.obs_dim)

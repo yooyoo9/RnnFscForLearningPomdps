@@ -1,4 +1,3 @@
-import numpy as np
 import time
 import torch
 import torch.nn as nn
@@ -51,8 +50,6 @@ class ActorCritic:
         self.seed = seed
         self.print_every = print_every
         self.running_avg_rate = running_avg_rate
-        torch.manual_seed(seed)
-        np.random.seed(seed)
 
         self.obs_dim = env.observation_space_n
         self.act_dim = env.action_space_n
@@ -136,10 +133,10 @@ class ActorCritic:
             if ep % self.print_every == 0:
                 self.logger.log_tabular('epoch', ep)
                 self.logger.log_tabular('running_reward', running_reward)
-                # logger.log_tabular('ep_len', average_only=True)
-                # logger.log_tabular('actor_loss', average_only=True)
-                # logger.log_tabular('critic_loss', average_only=True)
-                # logger.log_tabular('time', time.time() - start_time)
+                self.logger.log_tabular('ep_len', average_only=True)
+                self.logger.log_tabular('actor_loss', average_only=True)
+                self.logger.log_tabular('critic_loss', average_only=True)
+                self.logger.log_tabular('time', time.time() - start_time)
                 start_time = time.time()
                 self.logger.dump_tabular()
         return ep_rewards

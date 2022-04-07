@@ -1,11 +1,10 @@
 import numpy as np
 import torch
-from .base import ActorCritic, Actor, Critic
+from pomdp.agents.ac.base import ActorCritic, Actor, Critic
 
 
 class FscActorCritic(ActorCritic):
-    def __init__(self, env, gamma, seed, actor_lr, critic_lr, print_every, running_avg_rate, data_dir,
-                 max_hist_len):
+    def __init__(self, env, gamma, seed, actor_lr, critic_lr, print_every, running_avg_rate, data_dir, max_hist_len):
         self.name = 'FSC_AC' + str(max_hist_len)
         self.max_hist_len = max_hist_len
         self.o_buff = self.a_buff = None
