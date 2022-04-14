@@ -10,8 +10,8 @@ from pomdp.agents.td3.base import Agent
 class HistTd3Critic(nn.Module):
     def __init__(self, obs_dim, act_dim, max_hist_len):
         super(HistTd3Critic, self).__init__()
-        self.hist_linear1 = nn.Linear((obs_dim + act_dim) * max_hist_len, 256)
-        self.hist_linear2 = nn.Linear(256, 128)
+        self.hist_linear1 = nn.Linear((obs_dim + act_dim) * max_hist_len, 128)
+        self.hist_linear2 = nn.Linear(128, 128)
         self.cur_feature_linear1 = nn.Linear(obs_dim + act_dim, 128)
         self.cur_feature_linear2 = nn.Linear(128, 128)
         self.combined_linear1 = nn.Linear(128 + 128, 128)
@@ -36,8 +36,8 @@ class HistTd3Actor(nn.Module):
     def __init__(self, obs_dim, act_dim, act_limit, max_hist_len):
         super(HistTd3Actor, self).__init__()
         self.act_limit = act_limit
-        self.hist_linear1 = nn.Linear((obs_dim + act_dim) * max_hist_len, 256)
-        self.hist_linear2 = nn.Linear(256, 128)
+        self.hist_linear1 = nn.Linear((obs_dim + act_dim) * max_hist_len, 128)
+        self.hist_linear2 = nn.Linear(128, 128)
         self.cur_feature_linear1 = nn.Linear(obs_dim, 128)
         self.cur_feature_linear2 = nn.Linear(128, 128)
         self.combined_linear1 = nn.Linear(128 + 128, 128)
@@ -67,14 +67,14 @@ class HistTd3ActorCritic(nn.Module):
 
 
 class HistTd3(Agent):
-    def __init__(self, env, seed, steps_per_epoch=4000, replay_size=int(1e6), gamma=0.99, polyak=0.995, actor_lr=1e-3,
-                 critic_lr=1e-3, start_steps=10000, update_after=1000, update_every=50, act_noise=0.1, target_noise=0.2,
-                 noise_clip=0.5, policy_delay=2, max_ep_len=1000, batch_size=100, max_hist_len=100,
-                 running_avg_rate=0.95, data_dir='.'):
+    def __init__(self, env, test_env, seed, steps_per_epoch=4000, replay_size=int(1e6), gamma=0.99, polyak=0.995,
+                 actor_lr=1e-3, critic_lr=1e-3, start_steps=10000, update_after=1000, update_every=50, act_noise=0.1,
+                 target_noise=0.2, noise_clip=0.5, policy_delay=2, num_test_episodes=10, max_ep_len=1000,
+                 batch_size=100, max_hist_len=100, running_avg_rate=0.95, data_dir='.'):
         self.name = 'Hist' + str(max_hist_len)
-        super(HistTd3, self).__init__(env, seed, steps_per_epoch, replay_size, gamma, polyak, actor_lr,
+        super(HistTd3, self).__init__(env, test_env, seed, steps_per_epoch, replay_size, gamma, polyak, actor_lr,
                                       critic_lr, start_steps, update_after, update_every, act_noise, target_noise,
-                                      noise_clip, policy_delay, max_ep_len, batch_size, max_hist_len,
+                                      noise_clip, policy_delay, num_test_episodes, max_ep_len, batch_size, max_hist_len,
                                       running_avg_rate, data_dir)
 
     def get_agent(self):

@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import time
 from copy import deepcopy
@@ -8,10 +10,10 @@ from pomdp.utils.logger import EpochLogger, setup_logger_kwargs
 
 
 class Agent:
-    def __init__(self, env, seed, steps_per_epoch=4000, replay_size=int(1e6), gamma=0.99, polyak=0.995, actor_lr=1e-3,
-                 critic_lr=1e-3, start_steps=10000, update_after=1000, update_every=50, act_noise=0.1, target_noise=0.2,
-                 noise_clip=0.5, policy_delay=2, max_ep_len=1000, batch_size=100, max_hist_len=100,
-                 running_avg_rate=0.95, data_dir='.'):
+    def __init__(self, env, test_env, seed, steps_per_epoch=4000, replay_size=int(1e6), gamma=0.99, polyak=0.995,
+                 actor_lr=1e-3, critic_lr=1e-3, start_steps=10000, update_after=1000, update_every=50, act_noise=0.1,
+                 target_noise=0.2, noise_clip=0.5, policy_delay=2, num_test_episodes=10, max_ep_len=1000,
+                 batch_size=100, max_hist_len=100, running_avg_rate=0.95, data_dir='.'):
         if not hasattr(self, 'name'):
             self.name = 'BaseAgent'
         logger_kwargs = setup_logger_kwargs(self.name, env.name, seed, data_dir)
@@ -19,6 +21,7 @@ class Agent:
         self.logger.save_config(locals())
 
         self.env = env
+        self.test_env = test_env
         self.seed = seed
         self.steps_per_epoch = steps_per_epoch
         self.replay_size = replay_size
@@ -31,6 +34,7 @@ class Agent:
         self.target_noise = target_noise
         self.noise_clip = noise_clip
         self.policy_delay = policy_delay
+        self.num_test_episodes = num_test_episodes
         self.max_ep_len = max_ep_len
         self.batch_size = batch_size
         self.max_hist_len = max_hist_len
@@ -116,20 +120,58 @@ class Agent:
                     p_targ.data.mul_(self.polyak)
                     p_targ.data.add_((1 - self.polyak) * p.data)
 
-    def get_action(self, o, o_buff, a_buff, o_buff_len):
+    def get_action(self, o, o_buff, a_buff, o_buff_len, train):
         h_o = torch.tensor(o_buff).view(1, o_buff.shape[0], o_buff.shape[1]).float().to(self.device)
         h_a = torch.tensor(a_buff).view(1, a_buff.shape[0], a_buff.shape[1]).float().to(self.device)
         h_l = torch.tensor([o_buff_len]).float().to(self.device)
         with torch.no_grad():
             a = self.ac.pi(torch.as_tensor(o, dtype=torch.float32).view(1, -1).to(self.device),
                            h_o, h_a, h_l).cpu().numpy().reshape(self.act_dim)
-        a += self.act_noise * np.random.randn(self.act_dim)
+        if train:
+            a += self.act_noise * np.random.randn(self.act_dim)
         return np.clip(a, -self.act_limit, self.act_limit)
+
+    def test_agent(self):
+        rewards = []
+        for j in range(self.num_test_episodes):
+            o, d, ep_ret, ep_len = self.test_env.reset(), False, 0, 0
+            rewards = []
+            o_buff = np.zeros([self.max_hist_len, self.obs_dim])
+            a_buff = np.zeros([self.max_hist_len, self.act_dim])
+            o_buff[0, :] = o
+            o_buff_len = 0
+            while not (d or (ep_len == self.max_ep_len)):
+                a = self.get_action(o, o_buff, a_buff, o_buff_len, train=False)
+                o2, r, d, _ = self.test_env.step(a)
+                ep_ret += r
+                rewards.append(r)
+                ep_len += 1
+                if o_buff_len == self.max_hist_len:
+                    o_buff[:self.max_hist_len - 1] = o_buff[1:]
+                    a_buff[:self.max_hist_len - 1] = a_buff[1:]
+                    o_buff[self.max_hist_len - 1] = list(o)
+                    a_buff[self.max_hist_len - 1] = list(a)
+                else:
+                    o_buff[o_buff_len + 1 - 1] = list(o)
+                    a_buff[o_buff_len + 1 - 1] = list(a)
+                    o_buff_len += 1
+                o = o2
+            self.logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+        return rewards
+
+    def save_model(self):
+        fpath = self.logger.output_dir
+        os.makedirs(fpath, exist_ok=True)
+        model_fname = 'model.pt'
+        model_elements = {'ac_state_dict': self.ac.state_dict(),
+                          'target_ac_state_dict': self.ac_targ.state_dict(),
+                          'pi_optimizer_state_dict': self.pi_optimizer.state_dict(),
+                          'q_optimizer_state_dict': self.q_optimizer.state_dict()}
+        model_fname = os.path.join(fpath, model_fname)
+        torch.save(model_elements, model_fname)
 
     def train(self, epochs):
         start_time = time.time()
-        running_reward = -500
-        rewards = []
         t = 0
         while t < epochs * self.steps_per_epoch:
             o, ep_ret, ep_len = self.env.reset(), 0, 0
@@ -139,7 +181,7 @@ class Agent:
             o_buff_len = 0
             while True:
                 if t > self.start_steps:
-                    a = self.get_action(o, o_buff, a_buff, o_buff_len)
+                    a = self.get_action(o, o_buff, a_buff, o_buff_len, train=True)
                 else:
                     a = self.env.action_space.sample()
                 o2, r, d, _ = self.env.step(a)
@@ -166,19 +208,18 @@ class Agent:
 
                 if (t + 1) % self.steps_per_epoch == 0:
                     ep = (t+1) // self.steps_per_epoch
+                    returns = self.test_agent()
+                    np.save(os.path.join(self.logger.output_dir, 'ret.npy'), np.array(returns))
                     self.logger.log_tabular('Epoch', ep)
-                    self.logger.log_tabular('RunRew', running_reward)
-                    self.logger.log_tabular('EpRet', with_min_and_max=True)
+                    self.logger.log_tabular('EpRet', average_only=True)
+                    self.logger.log_tabular('TestEpRet', average_only=True)
                     self.logger.log_tabular('EpLen', average_only=True)
-                    self.logger.log_tabular('LossPi', average_only=True)
-                    self.logger.log_tabular('LossQ', average_only=True)
+                    self.logger.log_tabular('TestEpLen', average_only=True)
                     self.logger.log_tabular('Time', time.time() - start_time)
                     self.logger.dump_tabular()
                 t += 1
                 if d or (ep_len == self.max_ep_len):
-                    running_reward = self.running_avg_rate * running_reward + (1 - self.running_avg_rate) * ep_ret
-                    rewards.append(running_reward)
                     self.logger.store(EpRet=ep_ret, EpLen=ep_len)
+                    self.save_model()
                     break
-        return rewards
 

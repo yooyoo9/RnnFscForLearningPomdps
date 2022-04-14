@@ -14,8 +14,8 @@ class LstmTd3Critic(nn.Module):
         self.obs_dim = obs_dim
         self.act_dim = act_dim
 
-        self.hist_linear1 = nn.Linear(obs_dim, 128)
-        self.lstm = nn.LSTM(128, 128, batch_first=True)
+        self.hist_linear1 = nn.Linear(obs_dim, 256)
+        self.lstm = nn.LSTM(256, 128, batch_first=True)
         self.cur_feature_linear1 = nn.Linear(obs_dim + act_dim, 128)
         self.cur_feature_linear2 = nn.Linear(128, 128)
         self.combined_linear1 = nn.Linear(128 + 128, 128)
@@ -47,8 +47,8 @@ class LstmTd3Actor(nn.Module):
         self.act_dim = act_dim
         self.act_limit = act_limit
 
-        self.hist_linear1 = nn.Linear(obs_dim + act_dim, 128)
-        self.lstm = nn.LSTM(128, 128, batch_first=True)
+        self.hist_linear1 = nn.Linear(obs_dim + act_dim, 256)
+        self.lstm = nn.LSTM(256, 128, batch_first=True)
         self.cur_feature_linear1 = nn.Linear(obs_dim, 128)
         self.cur_feature_linear2 = nn.Linear(128, 128)
         self.combined_linear1 = nn.Linear(128 + 128, 128)
@@ -82,14 +82,15 @@ class LstmTd3ActorCritic(nn.Module):
 
 
 class LstmTd3(Agent):
-    def __init__(self, env, seed, steps_per_epoch=4000, replay_size=int(1e6), gamma=0.99, polyak=0.995, actor_lr=1e-3,
-                 critic_lr=1e-3, start_steps=10000, update_after=1000, update_every=50, act_noise=0.1, target_noise=0.2,
-                 noise_clip=0.5, policy_delay=2, max_ep_len=1000, batch_size=100, max_hist_len=100,
-                 running_avg_rate=0.95, data_dir='.'):
+    def __init__(self, env, test_env, seed, steps_per_epoch=4000, replay_size=int(1e6), gamma=0.99, polyak=0.995,
+                 actor_lr=1e-3, critic_lr=1e-3, start_steps=10000, update_after=1000, update_every=50, act_noise=0.1,
+                 target_noise=0.2, noise_clip=0.5, policy_delay=2, num_test_episodes=10, max_ep_len=1000,
+                 batch_size=100, max_hist_len=100, running_avg_rate=0.95, data_dir='.'):
         self.name = 'LSTM' + str(max_hist_len)
-        super(LstmTd3, self).__init__(env, seed, steps_per_epoch, replay_size, gamma, polyak, actor_lr,
+        # self.name = 'LSTM' + '_lr' + str(actor_lr)
+        super(LstmTd3, self).__init__(env, test_env, seed, steps_per_epoch, replay_size, gamma, polyak, actor_lr,
                                       critic_lr, start_steps, update_after, update_every, act_noise, target_noise,
-                                      noise_clip, policy_delay, max_ep_len, batch_size, max_hist_len,
+                                      noise_clip, policy_delay, num_test_episodes, max_ep_len, batch_size, max_hist_len,
                                       running_avg_rate, data_dir)
 
     def get_agent(self):
