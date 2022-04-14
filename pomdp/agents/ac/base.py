@@ -39,9 +39,19 @@ class Actor(nn.Module):
 
 
 class ActorCritic:
-    def __init__(self, env, gamma, seed, actor_lr, critic_lr, print_every, running_avg_rate, data_dir):
-        if not hasattr(self, 'name'):
-            self.name = 'AC'
+    def __init__(
+        self,
+        env,
+        gamma,
+        seed,
+        actor_lr,
+        critic_lr,
+        print_every,
+        running_avg_rate,
+        data_dir,
+    ):
+        if not hasattr(self, "name"):
+            self.name = "AC"
         logger_kwargs = setup_logger_kwargs(self.name, env.name, seed, data_dir)
         self.logger = EpochLogger(**logger_kwargs)
         self.logger.save_config(locals())
@@ -108,7 +118,10 @@ class ActorCritic:
                 o = o2
                 if d:
                     break
-            running_reward = self.running_avg_rate * running_reward + (1 - self.running_avg_rate) * ep_ret
+            running_reward = (
+                self.running_avg_rate * running_reward
+                + (1 - self.running_avg_rate) * ep_ret
+            )
             ep_rewards.append(running_reward)
 
             returns_tensor = torch.cat(self.compute_returns(rewards)).detach()
@@ -119,9 +132,11 @@ class ActorCritic:
             actor_loss = -(log_probs * advantage.detach()).mean()
             critic_loss = advantage.pow(2).mean()
 
-            loss_info = dict(actor_loss=actor_loss.detach().cpu().numpy(),
-                             critic_loss=critic_loss.detach().cpu().numpy(),
-                             ep_len=ep_len)
+            loss_info = dict(
+                actor_loss=actor_loss.detach().cpu().numpy(),
+                critic_loss=critic_loss.detach().cpu().numpy(),
+                ep_len=ep_len,
+            )
             self.logger.store(**loss_info)
 
             self.actor_optimizer.zero_grad()
@@ -131,12 +146,12 @@ class ActorCritic:
             self.actor_optimizer.step()
             self.critic_optimizer.step()
             if ep % self.print_every == 0:
-                self.logger.log_tabular('epoch', ep)
-                self.logger.log_tabular('running_reward', running_reward)
-                self.logger.log_tabular('ep_len', average_only=True)
-                self.logger.log_tabular('actor_loss', average_only=True)
-                self.logger.log_tabular('critic_loss', average_only=True)
-                self.logger.log_tabular('time', time.time() - start_time)
+                self.logger.log_tabular("epoch", ep)
+                self.logger.log_tabular("running_reward", running_reward)
+                self.logger.log_tabular("ep_len", average_only=True)
+                self.logger.log_tabular("actor_loss", average_only=True)
+                self.logger.log_tabular("critic_loss", average_only=True)
+                self.logger.log_tabular("time", time.time() - start_time)
                 start_time = time.time()
                 self.logger.dump_tabular()
         return ep_rewards

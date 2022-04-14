@@ -23,7 +23,7 @@ class LstmCritic(nn.Module):
 class LstmActor(nn.Module):
     def __init__(self, obs_dim, act_dim):
         super(LstmActor, self).__init__()
-        self.name = 'LSTM_AC'
+        self.name = "LSTM_AC"
         self.act_dim = act_dim
 
         self.linear1 = nn.Linear(obs_dim, 128)
@@ -40,10 +40,29 @@ class LstmActor(nn.Module):
 
 
 class LstmActorCritic(ActorCritic):
-    def __init__(self, env, gamma, seed, actor_lr, critic_lr, print_every, running_avg_rate, data_dir, h_dim):
-        self.name = 'LSTM_AC'
-        super(LstmActorCritic, self).__init__(env, gamma, seed, actor_lr, critic_lr, print_every, running_avg_rate,
-                                              data_dir)
+    def __init__(
+        self,
+        env,
+        gamma,
+        seed,
+        actor_lr,
+        critic_lr,
+        print_every,
+        running_avg_rate,
+        data_dir,
+        h_dim,
+    ):
+        self.name = "LSTM_AC"
+        super(LstmActorCritic, self).__init__(
+            env,
+            gamma,
+            seed,
+            actor_lr,
+            critic_lr,
+            print_every,
+            running_avg_rate,
+            data_dir,
+        )
         self.h_dim = h_dim
         self.a_hx = self.a_cx = self.c_hx = self.c_cx = None
 
@@ -67,4 +86,3 @@ class LstmActorCritic(ActorCritic):
         a = dist.sample()
         log_prob = dist.log_prob(a)
         return log_prob, a.item(), value
-

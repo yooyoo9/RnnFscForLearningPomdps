@@ -67,18 +67,61 @@ class HistTd3ActorCritic(nn.Module):
 
 
 class HistTd3(Agent):
-    def __init__(self, env, test_env, seed, steps_per_epoch=4000, replay_size=int(1e6), gamma=0.99, polyak=0.995,
-                 actor_lr=1e-3, critic_lr=1e-3, start_steps=10000, update_after=1000, update_every=50, act_noise=0.1,
-                 target_noise=0.2, noise_clip=0.5, policy_delay=2, num_test_episodes=10, max_ep_len=1000,
-                 batch_size=100, max_hist_len=100, running_avg_rate=0.95, data_dir='.'):
-        self.name = 'Hist' + str(max_hist_len)
-        super(HistTd3, self).__init__(env, test_env, seed, steps_per_epoch, replay_size, gamma, polyak, actor_lr,
-                                      critic_lr, start_steps, update_after, update_every, act_noise, target_noise,
-                                      noise_clip, policy_delay, num_test_episodes, max_ep_len, batch_size, max_hist_len,
-                                      running_avg_rate, data_dir)
+    def __init__(
+        self,
+        env,
+        test_env,
+        seed,
+        steps_per_epoch=4000,
+        replay_size=int(1e6),
+        gamma=0.99,
+        polyak=0.995,
+        actor_lr=1e-3,
+        critic_lr=1e-3,
+        start_steps=10000,
+        update_after=1000,
+        update_every=50,
+        act_noise=0.1,
+        target_noise=0.2,
+        noise_clip=0.5,
+        policy_delay=2,
+        num_test_episodes=10,
+        max_ep_len=1000,
+        batch_size=100,
+        max_hist_len=100,
+        running_avg_rate=0.95,
+        data_dir=".",
+    ):
+        self.name = "Hist" + str(max_hist_len)
+        super(HistTd3, self).__init__(
+            env,
+            test_env,
+            seed,
+            steps_per_epoch,
+            replay_size,
+            gamma,
+            polyak,
+            actor_lr,
+            critic_lr,
+            start_steps,
+            update_after,
+            update_every,
+            act_noise,
+            target_noise,
+            noise_clip,
+            policy_delay,
+            num_test_episodes,
+            max_ep_len,
+            batch_size,
+            max_hist_len,
+            running_avg_rate,
+            data_dir,
+        )
 
     def get_agent(self):
-        agent = HistTd3ActorCritic(self.obs_dim, self.act_dim, self.act_limit, self.max_hist_len)
+        agent = HistTd3ActorCritic(
+            self.obs_dim, self.act_dim, self.act_limit, self.max_hist_len
+        )
         q_params = itertools.chain(agent.q1.parameters(), agent.q2.parameters())
         return agent, q_params
 

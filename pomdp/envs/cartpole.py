@@ -7,7 +7,7 @@ from gym.envs.classic_control.cartpole import CartPoleEnv
 class CartpoleEnv(CartPoleEnv):
     def __init__(self):
         super(CartpoleEnv, self).__init__()
-        self.name = 'cartpole'
+        self.name = "cartpole"
         self.observation_space_n = 2
         self.finite_actions = True
         self.action_space_n = 2
@@ -33,4 +33,3 @@ class CartpoleEnv(CartPoleEnv):
             return np.array(partial_state, dtype=np.float32)
         else:
             return np.array(partial_state, dtype=np.float32), {}
-

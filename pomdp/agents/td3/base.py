@@ -10,12 +10,33 @@ from pomdp.utils.logger import EpochLogger, setup_logger_kwargs
 
 
 class Agent:
-    def __init__(self, env, test_env, seed, steps_per_epoch=4000, replay_size=int(1e6), gamma=0.99, polyak=0.995,
-                 actor_lr=1e-3, critic_lr=1e-3, start_steps=10000, update_after=1000, update_every=50, act_noise=0.1,
-                 target_noise=0.2, noise_clip=0.5, policy_delay=2, num_test_episodes=10, max_ep_len=1000,
-                 batch_size=100, max_hist_len=100, running_avg_rate=0.95, data_dir='.'):
-        if not hasattr(self, 'name'):
-            self.name = 'BaseAgent'
+    def __init__(
+        self,
+        env,
+        test_env,
+        seed,
+        steps_per_epoch=4000,
+        replay_size=int(1e6),
+        gamma=0.99,
+        polyak=0.995,
+        actor_lr=1e-3,
+        critic_lr=1e-3,
+        start_steps=10000,
+        update_after=1000,
+        update_every=50,
+        act_noise=0.1,
+        target_noise=0.2,
+        noise_clip=0.5,
+        policy_delay=2,
+        num_test_episodes=10,
+        max_ep_len=1000,
+        batch_size=100,
+        max_hist_len=100,
+        running_avg_rate=0.95,
+        data_dir=".",
+    ):
+        if not hasattr(self, "name"):
+            self.name = "BaseAgent"
         logger_kwargs = setup_logger_kwargs(self.name, env.name, seed, data_dir)
         self.logger = EpochLogger(**logger_kwargs)
         self.logger.save_config(locals())
@@ -52,7 +73,9 @@ class Agent:
         self.ac_targ = deepcopy(self.ac).to(self.device)
         for p in self.ac_targ.parameters():
             p.requires_grad = False
-        self.replay_buffer = ReplayBuffer(obs_dim=self.obs_dim, act_dim=self.act_dim, max_size=self.replay_size)
+        self.replay_buffer = ReplayBuffer(
+            obs_dim=self.obs_dim, act_dim=self.act_dim, max_size=self.replay_size
+        )
 
         self.pi_optimizer, self.q_optimizer = self.get_optimizers(actor_lr, critic_lr)
 
@@ -63,8 +86,21 @@ class Agent:
         raise NotImplementedError
 
     def compute_loss_q(self, data):
-        o, a, r, o2, d = data['obs'], data['act'], data['rew'], data['obs2'], data['done']
-        h_o, h_a, h_o2, h_a2, h_o_len, h_o2_len = data['hist_obs'], data['hist_act'], data['hist_obs2'], data['hist_act2'], data['hist_obs_len'], data['hist_obs2_len']
+        o, a, r, o2, d = (
+            data["obs"],
+            data["act"],
+            data["rew"],
+            data["obs2"],
+            data["done"],
+        )
+        h_o, h_a, h_o2, h_a2, h_o_len, h_o2_len = (
+            data["hist_obs"],
+            data["hist_act"],
+            data["hist_obs2"],
+            data["hist_act2"],
+            data["hist_obs_len"],
+            data["hist_obs2_len"],
+        )
 
         q1 = self.ac.q1(o, a, h_o, h_a, h_o_len)
         q2 = self.ac.q2(o, a, h_o, h_a, h_o_len)
@@ -80,7 +116,7 @@ class Agent:
 
             # Target Q-values
             q1_pi_targ = self.ac_targ.q1(o2, a2, h_o2, h_a2, h_o2_len)
-            q2_pi_targ  = self.ac_targ.q2(o2, a2, h_o2, h_a2, h_o2_len)
+            q2_pi_targ = self.ac_targ.q2(o2, a2, h_o2, h_a2, h_o2_len)
 
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
             backup = r + self.gamma * (1 - d) * q_pi_targ
@@ -93,7 +129,12 @@ class Agent:
         return loss_q
 
     def compute_loss_pi(self, data):
-        o, h_o, h_a, h_o_len = data['obs'], data['hist_obs'], data['hist_act'], data['hist_obs_len']
+        o, h_o, h_a, h_o_len = (
+            data["obs"],
+            data["hist_obs"],
+            data["hist_act"],
+            data["hist_obs_len"],
+        )
         a = self.ac.pi(o, h_o, h_a, h_o_len)
         q1_pi = self.ac.q1(o, a, h_o, h_a, h_o_len)
         return -q1_pi.mean()
@@ -121,12 +162,31 @@ class Agent:
                     p_targ.data.add_((1 - self.polyak) * p.data)
 
     def get_action(self, o, o_buff, a_buff, o_buff_len, train):
-        h_o = torch.tensor(o_buff).view(1, o_buff.shape[0], o_buff.shape[1]).float().to(self.device)
-        h_a = torch.tensor(a_buff).view(1, a_buff.shape[0], a_buff.shape[1]).float().to(self.device)
+        h_o = (
+            torch.tensor(o_buff)
+            .view(1, o_buff.shape[0], o_buff.shape[1])
+            .float()
+            .to(self.device)
+        )
+        h_a = (
+            torch.tensor(a_buff)
+            .view(1, a_buff.shape[0], a_buff.shape[1])
+            .float()
+            .to(self.device)
+        )
         h_l = torch.tensor([o_buff_len]).float().to(self.device)
         with torch.no_grad():
-            a = self.ac.pi(torch.as_tensor(o, dtype=torch.float32).view(1, -1).to(self.device),
-                           h_o, h_a, h_l).cpu().numpy().reshape(self.act_dim)
+            a = (
+                self.ac.pi(
+                    torch.as_tensor(o, dtype=torch.float32).view(1, -1).to(self.device),
+                    h_o,
+                    h_a,
+                    h_l,
+                )
+                .cpu()
+                .numpy()
+                .reshape(self.act_dim)
+            )
         if train:
             a += self.act_noise * np.random.randn(self.act_dim)
         return np.clip(a, -self.act_limit, self.act_limit)
@@ -147,8 +207,8 @@ class Agent:
                 rewards.append(r)
                 ep_len += 1
                 if o_buff_len == self.max_hist_len:
-                    o_buff[:self.max_hist_len - 1] = o_buff[1:]
-                    a_buff[:self.max_hist_len - 1] = a_buff[1:]
+                    o_buff[: self.max_hist_len - 1] = o_buff[1:]
+                    a_buff[: self.max_hist_len - 1] = a_buff[1:]
                     o_buff[self.max_hist_len - 1] = list(o)
                     a_buff[self.max_hist_len - 1] = list(a)
                 else:
@@ -162,11 +222,13 @@ class Agent:
     def save_model(self):
         fpath = self.logger.output_dir
         os.makedirs(fpath, exist_ok=True)
-        model_fname = 'model.pt'
-        model_elements = {'ac_state_dict': self.ac.state_dict(),
-                          'target_ac_state_dict': self.ac_targ.state_dict(),
-                          'pi_optimizer_state_dict': self.pi_optimizer.state_dict(),
-                          'q_optimizer_state_dict': self.q_optimizer.state_dict()}
+        model_fname = "model.pt"
+        model_elements = {
+            "ac_state_dict": self.ac.state_dict(),
+            "target_ac_state_dict": self.ac_targ.state_dict(),
+            "pi_optimizer_state_dict": self.pi_optimizer.state_dict(),
+            "q_optimizer_state_dict": self.q_optimizer.state_dict(),
+        }
         model_fname = os.path.join(fpath, model_fname)
         torch.save(model_elements, model_fname)
 
@@ -190,8 +252,8 @@ class Agent:
                 d = False if ep_len == self.max_ep_len else d
                 self.replay_buffer.store(o, a, r, o2, d)
                 if o_buff_len == self.max_hist_len:
-                    o_buff[:self.max_hist_len - 1] = o_buff[1:]
-                    a_buff[:self.max_hist_len - 1] = a_buff[1:]
+                    o_buff[: self.max_hist_len - 1] = o_buff[1:]
+                    a_buff[: self.max_hist_len - 1] = a_buff[1:]
                     o_buff[self.max_hist_len - 1] = list(o)
                     a_buff[self.max_hist_len - 1] = list(a)
                 else:
@@ -202,24 +264,28 @@ class Agent:
 
                 if t >= self.update_after and t % self.update_every == 0:
                     for j in range(self.update_every):
-                        batch = self.replay_buffer.sample_batch_with_history(self.batch_size, self.max_hist_len)
+                        batch = self.replay_buffer.sample_batch_with_history(
+                            self.batch_size, self.max_hist_len
+                        )
                         batch = {k: v.to(self.device) for k, v in batch.items()}
                         self.update(data=batch, timer=j)
 
                 if (t + 1) % self.steps_per_epoch == 0:
-                    ep = (t+1) // self.steps_per_epoch
+                    ep = (t + 1) // self.steps_per_epoch
                     returns = self.test_agent()
-                    np.save(os.path.join(self.logger.output_dir, 'ret.npy'), np.array(returns))
-                    self.logger.log_tabular('Epoch', ep)
-                    self.logger.log_tabular('EpRet', average_only=True)
-                    self.logger.log_tabular('TestEpRet', average_only=True)
-                    self.logger.log_tabular('EpLen', average_only=True)
-                    self.logger.log_tabular('TestEpLen', average_only=True)
-                    self.logger.log_tabular('Time', time.time() - start_time)
+                    np.save(
+                        os.path.join(self.logger.output_dir, "ret.npy"),
+                        np.array(returns),
+                    )
+                    self.logger.log_tabular("Epoch", ep)
+                    self.logger.log_tabular("EpRet", average_only=True)
+                    self.logger.log_tabular("TestEpRet", average_only=True)
+                    self.logger.log_tabular("EpLen", average_only=True)
+                    self.logger.log_tabular("TestEpLen", average_only=True)
+                    self.logger.log_tabular("Time", time.time() - start_time)
                     self.logger.dump_tabular()
                 t += 1
                 if d or (ep_len == self.max_ep_len):
                     self.logger.store(EpRet=ep_ret, EpLen=ep_len)
                     self.save_model()
                     break
-

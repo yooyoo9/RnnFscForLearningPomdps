@@ -25,11 +25,13 @@ class ReplayBuffer:
 
     def sample_batch(self, batch_size=32):
         idxs = np.random.randint(0, self.size, size=batch_size)
-        batch = dict(obs=self.obs_buf[idxs],
-                     obs2=self.obs2_buf[idxs],
-                     act=self.act_buf[idxs],
-                     rew=self.rew_buf[idxs],
-                     done=self.done_buf[idxs])
+        batch = dict(
+            obs=self.obs_buf[idxs],
+            obs2=self.obs2_buf[idxs],
+            act=self.act_buf[idxs],
+            rew=self.rew_buf[idxs],
+            done=self.done_buf[idxs],
+        )
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in batch.items()}
 
     def sample_batch_with_history(self, batch_size=32, max_hist_len=100):
@@ -57,7 +59,11 @@ class ReplayBuffer:
                     hist_start_id = 0
                 # If exist done before the last experience (not including the done in id), start from the index next to the done.
                 if len(np.where(self.done_buf[hist_start_id:id] == 1)[0]) != 0:
-                    hist_start_id = hist_start_id + (np.where(self.done_buf[hist_start_id:id] == 1)[0][-1]) + 1
+                    hist_start_id = (
+                        hist_start_id
+                        + (np.where(self.done_buf[hist_start_id:id] == 1)[0][-1])
+                        + 1
+                    )
                 hist_seg_len = id - hist_start_id
                 hist_obs_len[i] = hist_seg_len
                 hist_obs[i] = self.obs_buf[hist_start_id:id]
@@ -68,17 +74,19 @@ class ReplayBuffer:
                 else:
                     hist_obs2_len[i] = hist_seg_len
                 hist_obs2[i] = self.obs2_buf[hist_start_id:id]
-                hist_act2[i] = self.act_buf[hist_start_id+1:id+1]
+                hist_act2[i] = self.act_buf[hist_start_id + 1 : id + 1]
 
-        batch = dict(obs=self.obs_buf[idxs],
-                     obs2=self.obs2_buf[idxs],
-                     act=self.act_buf[idxs],
-                     rew=self.rew_buf[idxs],
-                     done=self.done_buf[idxs],
-                     hist_obs=hist_obs,
-                     hist_act=hist_act,
-                     hist_obs2=hist_obs2,
-                     hist_act2=hist_act2,
-                     hist_obs_len=hist_obs_len,
-                     hist_obs2_len=hist_obs2_len)
+        batch = dict(
+            obs=self.obs_buf[idxs],
+            obs2=self.obs2_buf[idxs],
+            act=self.act_buf[idxs],
+            rew=self.rew_buf[idxs],
+            done=self.done_buf[idxs],
+            hist_obs=hist_obs,
+            hist_act=hist_act,
+            hist_obs2=hist_obs2,
+            hist_act2=hist_act2,
+            hist_obs_len=hist_obs_len,
+            hist_obs2_len=hist_obs2_len,
+        )
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in batch.items()}

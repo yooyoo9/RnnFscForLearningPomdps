@@ -15,7 +15,7 @@ from pomdp.envs.cartpole import CartpoleEnv
 
 
 def get_agent(env, name, seed):
-    if name == 'lstm':
+    if name == "lstm":
         agent = LstmActorCritic(
             env=env,
             gamma=args.gamma,
@@ -25,8 +25,9 @@ def get_agent(env, name, seed):
             print_every=args.print_every,
             running_avg_rate=args.running_avg_rate,
             data_dir=args.data_dir,
-            h_dim=args.h_dim)
-    elif name == 'ac':
+            h_dim=args.h_dim,
+        )
+    elif name == "ac":
         agent = ActorCritic(
             env=env,
             gamma=args.gamma,
@@ -35,7 +36,8 @@ def get_agent(env, name, seed):
             critic_lr=args.critic_lr,
             print_every=args.print_every,
             running_avg_rate=args.running_avg_rate,
-            data_dir=args.data_dir)
+            data_dir=args.data_dir,
+        )
     else:
         agent = FscActorCritic(
             env=env,
@@ -46,7 +48,7 @@ def get_agent(env, name, seed):
             print_every=args.print_every,
             running_avg_rate=args.running_avg_rate,
             data_dir=args.data_dir,
-            max_hist_len=args.max_hist_len
+            max_hist_len=args.max_hist_len,
         )
     return agent.name, agent
 
@@ -58,7 +60,7 @@ def set_seed(seed):
 
 
 def worker(seed, algo_name, par):
-    print('Algo:{}, seed: {}, par: {} has started.'.format(algo_name, seed, par))
+    print("Algo:{}, seed: {}, par: {} has started.".format(algo_name, seed, par))
     args.max_hist_len = par
     st = time.time()
     env = CartpoleEnv()
@@ -66,28 +68,38 @@ def worker(seed, algo_name, par):
     algo_name, agent = get_agent(env, algo_name, seed)
     res = agent.train(args.epochs)
     et = time.time()
-    print('Algo: {}, seed: {} has finished, elapsed time: {:2.4f}s.'.format(algo_name, seed, et - st))
+    print(
+        "Algo: {}, seed: {} has finished, elapsed time: {:2.4f}s.".format(
+            algo_name, seed, et - st
+        )
+    )
     return algo_name, res
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--env_name', type=str, default='cartpole')
-parser.add_argument('--gamma', type=float, default=0.99)
-parser.add_argument('--epochs', type=int, default=15000)
-parser.add_argument('--actor_lr', type=float, default=1e-4)
-parser.add_argument('--critic_lr', type=float, default=1e-4)
-parser.add_argument('--print_every', type=int, default=100)
-parser.add_argument('--h_dim', type=int, default=256)
+parser.add_argument("--env_name", type=str, default="cartpole")
+parser.add_argument("--gamma", type=float, default=0.99)
+parser.add_argument("--epochs", type=int, default=15000)
+parser.add_argument("--actor_lr", type=float, default=1e-4)
+parser.add_argument("--critic_lr", type=float, default=1e-4)
+parser.add_argument("--print_every", type=int, default=100)
+parser.add_argument("--h_dim", type=int, default=256)
 parser.add_argument("--max_hist_len", "--max_hist_len", type=int, default=5)
-parser.add_argument('--running_avg_rate', type=float, default=0.99)
-parser.add_argument("--data_dir", type=str, default='experiments')
+parser.add_argument("--running_avg_rate", type=float, default=0.99)
+parser.add_argument("--data_dir", type=str, default="experiments")
 parser.add_argument("--num_workers", "--num_workers", type=int, default=10)
 args = parser.parse_args()
 
-ALGOS = [('lstm', 1), ('ac', 1), ('fsc', 1), ('fsc', 2), ('fsc', 3)]
+ALGOS = [("lstm", 1), ("ac", 1), ("fsc", 1), ("fsc", 2), ("fsc", 3)]
 SEED_LIST = [1003, 727, 527, 714, 1225]
-PLOT_NAME = 'env={}_g={}_ep={}_alr={}_clr={}_hdim={}_avg={}.png'.format(
-    args.env_name, args.gamma, args.epochs, args.actor_lr, args.critic_lr, args.h_dim, args.running_avg_rate
+PLOT_NAME = "env={}_g={}_ep={}_alr={}_clr={}_hdim={}_avg={}.png".format(
+    args.env_name,
+    args.gamma,
+    args.epochs,
+    args.actor_lr,
+    args.critic_lr,
+    args.h_dim,
+    args.running_avg_rate,
 )
 records = {}
 arguments = []
@@ -110,6 +122,4 @@ for algo_name in records.keys():
     plt.plot(x, y_mean)
     plt.fill_between(x, y_mean - y_std, y_mean + y_std, interpolate=True, alpha=0.3)
 plt.legend(records.keys())
-plt.savefig(os.path.join('result', PLOT_NAME))
-
-
+plt.savefig(os.path.join("result", PLOT_NAME))

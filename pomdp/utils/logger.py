@@ -8,7 +8,7 @@ def statistics_scalar(x, with_min_and_max=False):
     global_sum, global_n = x.sum(), len(x)
     mean = global_sum / global_n
 
-    global_sum_sq = np.sum((x - mean)**2)
+    global_sum_sq = np.sum((x - mean) ** 2)
     std = np.sqrt(global_sum_sq / global_n)  # compute global std
 
     if with_min_and_max:
@@ -21,26 +21,28 @@ def statistics_scalar(x, with_min_and_max=False):
 def setup_logger_kwargs(exp_name, env_name, seed=None, data_dir=None):
     # Make base path
     # ymd_time = time.strftime("%Y-%m-%d_")
-    relpath = ''.join([exp_name, '_', env_name])
+    relpath = "".join([exp_name, "_", env_name])
 
     if seed is not None:
         # Make a seed-specific subfolder in the experiment directory.
-        subfolder = ''.join(['s', str(seed)])
+        subfolder = "".join(["s", str(seed)])
         relpath = osp.join(relpath, subfolder)
 
-    logger_kwargs = dict(output_dir=osp.join(data_dir, relpath),
-                         exp_name=exp_name,
-                         env_name=env_name)
+    logger_kwargs = dict(
+        output_dir=osp.join(data_dir, relpath), exp_name=exp_name, env_name=env_name
+    )
     return logger_kwargs
 
 
 class Logger:
-    def __init__(self, output_dir, output_fname='progress.txt', exp_name=None, env_name=None):
+    def __init__(
+        self, output_dir, output_fname="progress.txt", exp_name=None, env_name=None
+    ):
         self.output_dir = output_dir
         if not osp.exists(self.output_dir):
             os.makedirs(self.output_dir)
         self.output_file_path = osp.join(self.output_dir, output_fname)
-        open_mode = 'w'
+        open_mode = "w"
         self.first_row = True
         self.log_headers = []
         self.output_file = open(self.output_file_path, open_mode)
@@ -55,16 +57,21 @@ class Logger:
         self.log_current_row[key] = val
 
     def save_config(self, config):
-        output = json.dumps(config, default=lambda o: '<not serializable>', separators=(',', ':\t\t'), indent=4,
-                            sort_keys=True)
-        with open(osp.join(self.output_dir, "config.json"), 'w') as out:
+        output = json.dumps(
+            config,
+            default=lambda o: "<not serializable>",
+            separators=(",", ":\t\t"),
+            indent=4,
+            sort_keys=True,
+        )
+        with open(osp.join(self.output_dir, "config.json"), "w") as out:
             out.write(output)
 
     def dump_tabular(self):
         vals = []
         key_lens = [len(key) for key in self.log_headers]
         max_key_len = max(15, max(key_lens))
-        keystr = '%' + '%d' % max_key_len
+        keystr = "%" + "%d" % max_key_len
         fmt = "| " + keystr + "s | %15s |"
         n_slashes = 22 + max_key_len
         # print("-" * n_slashes)
@@ -104,12 +111,16 @@ class EpochLogger(Logger):
             super().log_tabular(key, val)
         else:
             v = self.epoch_dict[key]
-            vals = np.concatenate(v) if isinstance(v[0], np.ndarray) and len(v[0].shape) > 0 else v
+            vals = (
+                np.concatenate(v)
+                if isinstance(v[0], np.ndarray) and len(v[0].shape) > 0
+                else v
+            )
             stats = statistics_scalar(vals, with_min_and_max=with_min_and_max)
-            super().log_tabular(key if average_only else 'Average' + key, stats[0])
+            super().log_tabular(key if average_only else "Average" + key, stats[0])
             if not (average_only):
-                super().log_tabular('Std' + key, stats[1])
+                super().log_tabular("Std" + key, stats[1])
             if with_min_and_max:
-                super().log_tabular('Max' + key, stats[3])
-                super().log_tabular('Min' + key, stats[2])
+                super().log_tabular("Max" + key, stats[3])
+                super().log_tabular("Min" + key, stats[2])
         self.epoch_dict[key] = []
