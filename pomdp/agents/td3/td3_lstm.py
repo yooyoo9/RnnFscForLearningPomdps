@@ -56,13 +56,21 @@ class LstmTd3Actor(nn.Module):
         self.combined_linear1 = nn.Linear(128 + 128, 128)
         self.combined_linear2 = nn.Linear(128, act_dim)
 
-    def forward(self, obs, hist_obs, hist_act, hist_seg_len):
+        self.lstm_hidden_state = None
+
+    def forward(self, obs, hist_obs, hist_act, hist_seg_len, train):
         tmp_hist_seg_len = deepcopy(hist_seg_len)
         tmp_hist_seg_len[hist_seg_len == 0] = 1
 
-        x = torch.cat([hist_obs, hist_act], dim=-1)
-        x = F.relu(self.hist_linear1(x))
-        x, _ = self.lstm(x)
+        if train:
+            x = torch.cat([hist_obs, hist_act], dim=-1)
+            x = F.relu(self.hist_linear1(x))
+            x, _ = self.lstm(x)
+        else:
+            x = torch.cat([hist_obs, hist_act], dim=-1)
+            x = F.relu(self.hist_linear1(x))
+            x, self.lstm_hidden_state = self.lstm(x, self.lstm_hidden_state)
+
         hist_out = torch.gather(
             x, 1, (tmp_hist_seg_len - 1).view(-1, 1).repeat(1, 128).unsqueeze(1).long()
         ).squeeze(1)

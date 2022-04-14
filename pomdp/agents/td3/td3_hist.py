@@ -43,7 +43,7 @@ class HistTd3Actor(nn.Module):
         self.combined_linear1 = nn.Linear(128 + 128, 128)
         self.combined_linear2 = nn.Linear(128, act_dim)
 
-    def forward(self, obs, hist_obs, hist_act, hist_seg_len):
+    def forward(self, obs, hist_obs, hist_act, hist_seg_len, train=True):
         x = torch.flatten(torch.cat([hist_obs, hist_act], dim=-1), start_dim=1)
         x = F.relu(self.hist_linear1(x))
         hist_out = F.relu(self.hist_linear2(x))

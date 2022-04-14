@@ -182,6 +182,7 @@ class Agent:
                     h_o,
                     h_a,
                     h_l,
+                    train
                 )
                 .cpu()
                 .numpy()
@@ -200,6 +201,7 @@ class Agent:
             a_buff = np.zeros([self.max_hist_len, self.act_dim])
             o_buff[0, :] = o
             o_buff_len = 0
+            self.ac.pi.lstm_hidden_state = None
             while not (d or (ep_len == self.max_ep_len)):
                 a = self.get_action(o, o_buff, a_buff, o_buff_len, train=False)
                 o2, r, d, _ = self.test_env.step(a)
