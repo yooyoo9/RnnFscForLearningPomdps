@@ -8,14 +8,14 @@ import itertools
 from pomdp.agents.td3.base import Agent
 
 
-class LstmTd3Critic(nn.Module):
+class RnnTd3Critic(nn.Module):
     def __init__(self, obs_dim, act_dim):
-        super(LstmTd3Critic, self).__init__()
+        super(RnnTd3Critic, self).__init__()
         self.obs_dim = obs_dim
         self.act_dim = act_dim
 
-        self.hist_linear1 = nn.Linear(obs_dim, 256)
-        self.lstm = nn.LSTM(256, 128, batch_first=True)
+        self.hist_linear1 = nn.Linear(obs_dim, 128)
+        self.lstm = nn.RNN(128, 128, batch_first=True)
         self.cur_feature_linear1 = nn.Linear(obs_dim + act_dim, 128)
         self.cur_feature_linear2 = nn.Linear(128, 128)
         self.combined_linear1 = nn.Linear(128 + 128, 128)
@@ -42,15 +42,15 @@ class LstmTd3Critic(nn.Module):
         return torch.squeeze(x, -1)
 
 
-class LstmTd3Actor(nn.Module):
+class RnnTd3Actor(nn.Module):
     def __init__(self, obs_dim, act_dim, act_limit):
-        super(LstmTd3Actor, self).__init__()
+        super(RnnTd3Actor, self).__init__()
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         self.act_limit = act_limit
 
-        self.hist_linear1 = nn.Linear(obs_dim + act_dim, 256)
-        self.lstm = nn.LSTM(256, 128, batch_first=True)
+        self.hist_linear1 = nn.Linear(obs_dim + act_dim, 128)
+        self.lstm = nn.RNN(128, 128, batch_first=True)
         self.cur_feature_linear1 = nn.Linear(obs_dim, 128)
         self.cur_feature_linear2 = nn.Linear(128, 128)
         self.combined_linear1 = nn.Linear(128 + 128, 128)
@@ -62,13 +62,11 @@ class LstmTd3Actor(nn.Module):
         tmp_hist_seg_len = deepcopy(hist_seg_len)
         tmp_hist_seg_len[hist_seg_len == 0] = 1
 
+        x = torch.cat([hist_obs, hist_act], dim=-1)
+        x = F.relu(self.hist_linear1(x))
         if train:
-            x = torch.cat([hist_obs, hist_act], dim=-1)
-            x = F.relu(self.hist_linear1(x))
             x, _ = self.lstm(x)
         else:
-            x = torch.cat([hist_obs, hist_act], dim=-1)
-            x = F.relu(self.hist_linear1(x))
             x, self.lstm_hidden_state = self.lstm(x, self.lstm_hidden_state)
 
         hist_out = torch.gather(
@@ -85,15 +83,15 @@ class LstmTd3Actor(nn.Module):
         return self.act_limit * x
 
 
-class LstmTd3ActorCritic(nn.Module):
+class RnnTd3ActorCritic(nn.Module):
     def __init__(self, obs_dim, act_dim, act_limit=1):
-        super(LstmTd3ActorCritic, self).__init__()
-        self.q1 = LstmTd3Critic(obs_dim, act_dim)
-        self.q2 = LstmTd3Critic(obs_dim, act_dim)
-        self.pi = LstmTd3Actor(obs_dim, act_dim, act_limit)
+        super(RnnTd3ActorCritic, self).__init__()
+        self.q1 = RnnTd3Critic(obs_dim, act_dim)
+        self.q2 = RnnTd3Critic(obs_dim, act_dim)
+        self.pi = RnnTd3Actor(obs_dim, act_dim, act_limit)
 
 
-class LstmTd3(Agent):
+class RnnTd3(Agent):
     def __init__(
         self,
         env,
@@ -119,9 +117,9 @@ class LstmTd3(Agent):
         running_avg_rate=0.95,
         data_dir=".",
     ):
-        self.name = "LSTM" + str(max_hist_len)
+        self.name = "RNN" + str(max_hist_len)
         # self.name = 'LSTM' + '_lr' + str(actor_lr)
-        super(LstmTd3, self).__init__(
+        super(RnnTd3, self).__init__(
             env,
             test_env,
             seed,
@@ -147,7 +145,7 @@ class LstmTd3(Agent):
         )
 
     def get_agent(self):
-        agent = LstmTd3ActorCritic(self.obs_dim, self.act_dim, self.act_limit)
+        agent = RnnTd3ActorCritic(self.obs_dim, self.act_dim, self.act_limit)
         q_params = itertools.chain(agent.q1.parameters(), agent.q2.parameters())
         return agent, q_params
 

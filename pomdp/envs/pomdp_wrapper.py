@@ -2,19 +2,25 @@ import numpy as np
 import gym
 
 
-class HalfCheetahEnv(gym.ObservationWrapper):
+class ModifiedEnv(gym.ObservationWrapper):
     def __init__(
         self,
+        name="halfcheetah",
         pomdp_type="remove_velocity",
         flicker_prob=0.2,
         random_noise_sigma=0.1,
         random_sensor_missing_prob=0.1,
     ):
-        super().__init__(gym.make("HalfCheetah-v3"))
+        if name == 'halfcheetah':
+            orig = gym.make("HalfCheetah-v3")
+            self.name = "HalfCheetah-"
+        else:
+            orig = gym.make("Ant-v3")
+            self.name = "Ant-"
+        super().__init__(orig)
         self.finite_actions = False
         self.action_space_n = self.action_space.shape[0]
 
-        self.name = "HalfCheetah-"
         if pomdp_type == "remove_velocity":
             self.name += "vel"
         elif pomdp_type == "flickering":

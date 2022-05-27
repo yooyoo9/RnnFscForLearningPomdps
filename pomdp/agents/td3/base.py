@@ -106,7 +106,7 @@ class Agent:
         q2 = self.ac.q2(o, a, h_o, h_a, h_o_len)
 
         with torch.no_grad():
-            pi_targ = self.ac_targ.pi(o2, h_o2, h_a2, h_o2_len)
+            pi_targ = self.ac_targ.pi(o2, h_o2, h_a2, h_o2_len, train=True)
 
             # Target policy smoothing
             epsilon = torch.randn_like(pi_targ) * self.target_noise
@@ -135,7 +135,7 @@ class Agent:
             data["hist_act"],
             data["hist_obs_len"],
         )
-        a = self.ac.pi(o, h_o, h_a, h_o_len)
+        a = self.ac.pi(o, h_o, h_a, h_o_len, train=True)
         q1_pi = self.ac.q1(o, a, h_o, h_a, h_o_len)
         return -q1_pi.mean()
 

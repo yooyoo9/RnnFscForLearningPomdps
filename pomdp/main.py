@@ -6,14 +6,14 @@ import time
 
 from multiprocessing import Pool
 
-from pomdp.envs.halfcheetah import HalfCheetahEnv
-from pomdp.agents.td3.td3_lstm import LstmTd3
+from pomdp.envs.pomdp_wrapper import ModifiedEnv
+from pomdp.agents.td3.td3_rnn import RnnTd3
 from pomdp.agents.td3.td3_hist import HistTd3
 
 
 def get_agent(env, test_env, name, seed):
-    if name == "lstm_td3":
-        agent = LstmTd3(
+    if name == "rnn_td3":
+        agent = RnnTd3(
             env=env,
             test_env=test_env,
             seed=seed,
@@ -45,8 +45,8 @@ def worker(seed, algo_name, par):
     print("Algo:{}, seed: {}, par: {} has started.".format(algo_name, seed, par))
     args.max_hist_len = par
     st = time.time()
-    env = HalfCheetahEnv(args.env_type, args.fprob, args.rnoise)
-    test_env = HalfCheetahEnv(args.env_type, args.fprob, args.rnoise)
+    env = ModifiedEnv("halfcheetah", args.env_type, args.fprob, args.rnoise)
+    test_env = ModifiedEnv("halfcheetah", args.env_type, args.fprob, args.rnoise)
     set_seed(env, test_env, seed)
     algo_name, agent = get_agent(env, test_env, algo_name, seed)
     res = agent.train(args.epochs)
@@ -61,7 +61,7 @@ def worker(seed, algo_name, par):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env_name", type=str, default="halfcheetah")
-parser.add_argument("--env_type", type=str, default="remove_velocity")
+parser.add_argument("--env_type", type=str, default="random_noise")
 parser.add_argument("--fprob", type=float, default=0.1)
 parser.add_argument("--rnoise", type=float, default=0.1)
 parser.add_argument("--epochs", type=int, default=400)
@@ -72,7 +72,7 @@ parser.add_argument(
     "--exp_name",
     type=str,
     default="-1",
-    choices=["-1", "lstm", "hist_td3", "fsc", "lstm_td3"],
+    choices=["-1", "lstm", "hist_td3", "fsc", "lstm_td3", "rnn_td3"],
 )
 parser.add_argument("--data_dir", type=str, default="experiments")
 parser.add_argument("--num_workers", "--num_workers", type=int, default=5)
@@ -87,7 +87,7 @@ elif args.env_type == "random_noise":
     args.env_name += f"rnoise{args.rnoise:.2f}"
 
 if args.exp_name == "-1":
-    ALGOS = [("lstm_td3", 2)]
+    ALGOS = [("rnn_td3", 5)]
     SEED_LIST = [1003, 727, 527, 714, 1225]
     records = {}
     arguments = []
