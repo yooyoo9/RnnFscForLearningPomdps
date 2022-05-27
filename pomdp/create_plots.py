@@ -2,7 +2,9 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-seeds = ["527", "714", "1003", "1225", "727"]
+# seeds = ["527", "714", "1003", "1225", "727"]
+seeds = ["527", "1003", "727"]
+seeds = ["1003"]
 
 
 def read_col(file_name, idx):
@@ -38,6 +40,8 @@ def get_records(file_name, idx, records, algo, nb):
 def plot(records, plot_name):
     plt.figure()
     for algo in records.keys():
+        print(algo)
+        print(len(records[algo]), len(records[algo][0]))
         data = np.array(records[algo])
         y_mean = np.mean(data, axis=0)
         y_std = np.std(data, axis=0)
@@ -51,8 +55,10 @@ def plot(records, plot_name):
 
 def plot_env(env_name, args, plot_name, nb=10):
     for idx in range(3):
+        print(idx)
         records = {}
-        arguments = ["LSTM5", "Hist5"]
+        # arguments = ["LSTM5", "Hist5", "RNN5"]
+        arguments = ["Hist5", "RNN5"]
         for i in range(len(arguments)):
             for cur in args:
                 algo = arguments[i] + "_" + cur
@@ -69,10 +75,10 @@ def plot_env(env_name, args, plot_name, nb=10):
 
 
 def plot_vel(env_name, plot_name, nb=10):
-    # for idx in range(3):
-    for idx in [1]:
+    for idx in range(3):
         records = {}
-        arguments = ["LSTM1", "LSTM2", "LSTM5", "Hist1", "Hist2", "Hist5"]
+        # arguments = ["LSTM1", "LSTM2", "LSTM5", "Hist1", "Hist2", "Hist5", "RNN5"]
+        arguments = ["Hist1", "Hist2", "Hist5", "RNN5"]
         for i in range(len(arguments)):
             algo = arguments[i]
             file_name = os.path.join("experiments", arguments[i] + "_" + env_name)
@@ -86,7 +92,7 @@ def plot_vel(env_name, plot_name, nb=10):
 
 
 def plot_agent(env_name, args, plot_name, nb=10):
-    for idx in range(3):
+    for idx in range(1):
         records = {}
         agent_name = "LSTM_lr"
         for cur in args:
@@ -110,10 +116,10 @@ if __name__ == "__main__":
     rnoise = ["0.10", "0.50"]
     plot_env(env_name, rnoise, env_name)
 
-    env_name = "HalfCheetah-vel"
-    args = ["0.01", "0.001", "0.0001"]
-    plot_name = "HalfCheetah-vel-lr"
-    plot_agent(env_name, args, plot_name)
-
-    env_name = "HalfCheetah-vel"
-    plot_vel(env_name, env_name, nb=1)
+    # env_name = "HalfCheetah-vel"
+    # args = ["0.01", "0.001", "0.0001"]
+    # plot_name = "HalfCheetah-vel-lr"
+    # plot_agent(env_name, args, plot_name)
+    #
+    # env_name = "HalfCheetah-vel"
+    # plot_vel(env_name, env_name, nb=1)
