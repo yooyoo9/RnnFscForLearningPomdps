@@ -182,7 +182,7 @@ class Agent:
                     h_o,
                     h_a,
                     h_l,
-                    train
+                    train,
                 )
                 .cpu()
                 .numpy()

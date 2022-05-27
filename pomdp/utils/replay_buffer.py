@@ -58,15 +58,17 @@ class ReplayBuffer:
                 )
             hist_seg_len = id - hist_start_id
             hist_obs_len[i] = hist_seg_len
-            hist_obs[i][:id-hist_start_id] = self.obs_buf[hist_start_id:id]
-            hist_act[i][:id-hist_start_id] = self.act_buf[hist_start_id:id]
+            hist_obs[i][: id - hist_start_id] = self.obs_buf[hist_start_id:id]
+            hist_act[i][: id - hist_start_id] = self.act_buf[hist_start_id:id]
             # If the first experience of an episode is sampled, the hist lengths are different for obs and obs2.
             if hist_seg_len == 0:
                 hist_obs2_len[i] = 1
             else:
                 hist_obs2_len[i] = hist_seg_len
-            hist_obs2[i][:id-hist_start_id] = self.obs2_buf[hist_start_id:id]
-            hist_act2[i][:id-hist_start_id] = self.act_buf[hist_start_id + 1 : id + 1]
+            hist_obs2[i][: id - hist_start_id] = self.obs2_buf[hist_start_id:id]
+            hist_act2[i][: id - hist_start_id] = self.act_buf[
+                hist_start_id + 1 : id + 1
+            ]
 
         batch = dict(
             obs=self.obs_buf[idxs],

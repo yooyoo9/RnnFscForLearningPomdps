@@ -11,7 +11,7 @@ class ModifiedEnv(gym.ObservationWrapper):
         random_noise_sigma=0.1,
         random_sensor_missing_prob=0.1,
     ):
-        if name == 'halfcheetah':
+        if name == "halfcheetah":
             orig = gym.make("HalfCheetah-v3")
             self.name = "HalfCheetah-"
         else:
