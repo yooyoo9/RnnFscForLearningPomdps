@@ -34,7 +34,7 @@ class ModifiedEnv(gym.ObservationWrapper):
         self.random_sensor_missing_prob = random_sensor_missing_prob
 
         if self.pomdp_type == "remove_velocity":
-            self.remain_obs_idx, self.observation_space = self._remove_velocity()
+            self.remain_obs_idx, self.observation_space = self._remove_velocity(name)
         self.observation_space_n = self.observation_space.shape[0]
 
     def observation(self, obs):
@@ -54,8 +54,11 @@ class ModifiedEnv(gym.ObservationWrapper):
             return obs.flatten()
 
     @staticmethod
-    def _remove_velocity():
-        remain_obs_idx = np.arange(0, 8)
+    def _remove_velocity(name):
+        if name == "halfcheetah":
+            remain_obs_idx = np.arange(0, 8)
+        else:
+            remain_obs_idx = list(np.arange(0, 13)) + list(np.arange(27, 111))
         obs_low = np.array(
             [-np.inf for _ in range(len(remain_obs_idx))], dtype="float32"
         )
