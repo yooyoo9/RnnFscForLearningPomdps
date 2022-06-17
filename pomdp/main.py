@@ -45,8 +45,8 @@ def worker(seed, algo_name, par):
     print("Algo:{}, seed: {}, par: {} has started.".format(algo_name, seed, par))
     args.max_hist_len = par
     st = time.time()
-    env = ModifiedEnv("halfcheetah", args.env_type, args.fprob, args.rnoise)
-    test_env = ModifiedEnv("halfcheetah", args.env_type, args.fprob, args.rnoise)
+    env = ModifiedEnv(args.env_name, args.env_type, args.fprob, args.rnoise)
+    test_env = ModifiedEnv(args.env_name, args.env_type, args.fprob, args.rnoise)
     set_seed(env, test_env, seed)
     algo_name, agent = get_agent(env, test_env, algo_name, seed)
     res = agent.train(args.epochs)
@@ -61,7 +61,7 @@ def worker(seed, algo_name, par):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env_name", type=str, default="halfcheetah")
-parser.add_argument("--env_type", type=str, default="random_noise")
+parser.add_argument("--env_type", type=str, default="remove_velocity")
 parser.add_argument("--fprob", type=float, default=0.1)
 parser.add_argument("--rnoise", type=float, default=0.1)
 parser.add_argument("--epochs", type=int, default=400)
@@ -78,16 +78,8 @@ parser.add_argument("--data_dir", type=str, default="experiments")
 parser.add_argument("--num_workers", "--num_workers", type=int, default=5)
 args = parser.parse_args()
 
-args.env_name = args.env_name + "-"
-if args.env_type == "remove_velocity":
-    args.env_name += "vel"
-elif args.env_type == "flickering":
-    args.env_name += f"fprob{args.fprob:.2f}"
-elif args.env_type == "random_noise":
-    args.env_name += f"rnoise{args.rnoise:.2f}"
-
 if args.exp_name == "-1":
-    ALGOS = [("rnn_td3", 5)]
+    ALGOS = [("rnn_td3", args.max_hist_len)]
     SEED_LIST = [1003, 727, 527, 714, 1225]
     records = {}
     arguments = []
