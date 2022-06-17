@@ -9,7 +9,6 @@ class ModifiedEnv(gym.ObservationWrapper):
         pomdp_type="remove_velocity",
         flicker_prob=0.2,
         random_noise_sigma=0.1,
-        random_sensor_missing_prob=0.1,
     ):
         if name == "halfcheetah":
             orig = gym.make("HalfCheetah-v3")
@@ -31,7 +30,6 @@ class ModifiedEnv(gym.ObservationWrapper):
         self.pomdp_type = pomdp_type
         self.flicker_prob = flicker_prob
         self.random_noise_sigma = random_noise_sigma
-        self.random_sensor_missing_prob = random_sensor_missing_prob
 
         if self.pomdp_type == "remove_velocity":
             self.remain_obs_idx, self.observation_space = self._remove_velocity(name)
