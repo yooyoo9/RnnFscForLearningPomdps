@@ -16,7 +16,7 @@ class FscActorCritic(ActorCritic):
         data_dir,
         max_hist_len,
     ):
-        self.name = "FSC_AC" + str(max_hist_len)
+        self.name = "FSC_AC(" + str(max_hist_len) + ")"
         self.max_hist_len = max_hist_len
         self.o_buff = self.a_buff = None
         self.o_buff_len = 0

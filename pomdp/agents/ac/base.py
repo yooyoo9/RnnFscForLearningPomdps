@@ -1,3 +1,4 @@
+import os
 import time
 import torch
 import torch.nn as nn
@@ -97,6 +98,17 @@ class ActorCritic:
     def initialize_epoch(self, o):
         return
 
+    def save_model(self):
+        fpath = self.logger.output_dir
+        os.makedirs(fpath, exist_ok=True)
+        model_fname = "model.pt"
+        model_elements = {
+            "ac_state_dict": self.actor.state_dict(),
+            "critic_state_dict": self.critic.state_dict(),
+        }
+        model_fname = os.path.join(fpath, model_fname)
+        torch.save(model_elements, model_fname)
+
     def train(self, epochs):
         start_time = time.time()
         running_reward = 0.0
@@ -154,4 +166,5 @@ class ActorCritic:
                 self.logger.log_tabular("time", time.time() - start_time)
                 start_time = time.time()
                 self.logger.dump_tabular()
+                self.save_model()
         return ep_rewards
